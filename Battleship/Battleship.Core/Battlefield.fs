@@ -10,14 +10,35 @@ module Battlefield =
     (* ------- À COMPLÉTER ------- *)
     (* --- Nouvelles fonctions --- *)
 
+    //Rempli une Row vide
+    let initClearRow (length : int) : Sector list =
+        let rec initClearRow' (n : int) (row : Sector list) : Sector list =
+            if n > 0 then 
+                initClearRow' (n - 1) (Clear::row)
+            else 
+                row
+        initClearRow' length []
+
+
+    (* --- Fin nouvelles fonctions --- *)
+
+
     let initClearGrid (dims: Dims) : Sector Grid =
         (* ------- À COMPLÉTER ------- *)
         (* ----- Implémentation ------ *)
-        Empty
+        let rec initClearGrid' (i : int) =
+            if i > 0 then 
+                Row (initClearRow (snd dims), initClearGrid' (i - 1))
+            else 
+                Empty
+        initClearGrid' (fst dims)
 
     let addShip (ship: Ship) (grid: Sector Grid) : Sector Grid =
         (* ------- À COMPLÉTER ------- *)
         (* ----- Implémentation ------ *)
+        let coords = ship.Coords
+        let firstx, firsty = List.head coords
+        let size = List.length coords
         Empty
 
     let replaceShip (ship: Ship) (grid: Sector Grid) : Sector Grid =

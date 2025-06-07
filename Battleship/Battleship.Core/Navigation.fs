@@ -35,7 +35,12 @@ module Navigation =
     let canPlace (center: Coord) (direction: Direction) (name: Name) (grid: Sector Grid) : bool =
         (* ------- À COMPLÉTER ------- *)
         (* ----- Implémentation ------ *)
-        false
+        let ship = createShip center direction name
+        let coords = ship.Coords
+        let inBounds = checkCoords (fun coord -> isInGrid coord grid) coords
+        let isClear = checkCoords (fun coord -> (getCell coord grid) = Clear) coords
+        inBounds && isClear
+        //TODO doit aussi valider le périmètre des bateaux! canMove sera identique mais sans périmètre
 
     let canMove (ship: Ship) (direction: Direction) (grid: Sector Grid) : bool =
         (* ------- À COMPLÉTER ------- *)
@@ -52,9 +57,6 @@ module Navigation =
         (* ----- Implémentation ------ *)
         let (cx, cy) = ship.Center
 
-        let isWithinGrid (x, y) =
-            x >= 0 && x < 10 && y >= 0 && y < 5 // largeur 10 colonnes, hauteur 5 lignes
-
         ship.Coords
         |> List.forall (fun (x, y) ->
             let dx = x - cx
@@ -63,12 +65,12 @@ module Navigation =
                 match rotation with
                 | Clockwise -> (cx - dy, cy + dx)
                 | Counterclockwise -> (cx + dy, cy - dx)
-            isWithinGrid (nx, ny) &&
-            match Grid.getCell (nx, ny) grid with
+
+            isInGrid (nx, ny) grid &&
+            match Grid.getCell (ny, nx) grid with // inverser ny et nx
             | Grid.Clear -> true
             | Grid.Active (name, _) when name = ship.Name -> true 
             | _ -> false
-        )
 
     let rotate (ship: Ship) (direction: Direction) : Ship =
         (* ------- À COMPLÉTER ------- *)
