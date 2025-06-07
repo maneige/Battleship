@@ -71,6 +71,7 @@ module Navigation =
             | Grid.Clear -> true
             | Grid.Active (name, _) when name = ship.Name -> true 
             | _ -> false
+        )
 
     let rotate (ship: Ship) (direction: Direction) : Ship =
         (* ------- À COMPLÉTER ------- *)
@@ -90,20 +91,50 @@ module Navigation =
         { ship with Coords = newCoords; Facing = newFacing }
 
     let canMoveForward (ship: Ship) (grid: Sector Grid) : bool =
-        (* ------- À COMPLÉTER ------- *)
-        (* ----- Implémentation ------ *)
-        false
+        let newCoords = ship.Coords |> List.map (fun (row, col) ->
+            match ship.Facing with
+            | North -> (row - 1, col)
+            | South -> (row + 1, col)
+            | East -> (row, col + 1)
+            | West -> (row, col - 1)
+        )
+        let isValidMove coord =
+            isInGrid coord grid &&
+            match getCell coord grid with
+            | Clear -> true
+            | Active (name, _) -> name = ship.Name
+        newCoords |> List.forall isValidMove
 
     let moveForward (ship: Ship) : Ship =
-        (* ------- À COMPLÉTER ------- *)
-        (* ----- Implémentation ------ *)
-        { Coords = []; Center = (0, 0); Facing = North; Name = Spy }
-
+        let newCoords = ship.Coords |> List.map (fun (row, col) ->
+            match ship.Facing with
+            | North -> (row - 1, col)
+            | South -> (row + 1, col)
+            | East -> (row, col + 1)
+            | West -> (row, col - 1)
+        )
+        let (centerRow, centerCol) = ship.Center
+        let newCenter =
+            match ship.Facing with
+            | North -> (centerRow - 1, centerCol)
+            | South -> (centerRow + 1, centerCol)
+            | East -> (centerRow, centerCol + 1)
+            | West -> (centerRow, centerCol - 1)
+        { ship with Coords = newCoords; Center = newCenter }
     let getNextDirection (current: Direction) (rotation: Rotation) : Direction =
-        (* ------- À COMPLÉTER ------- *)
-        (* ----- Implémentation ------ *)
-        North
-
+        match rotation with
+        | Clockwise ->
+            match current with
+            | North -> East
+            | East -> South
+            | South -> West
+            | West -> North
+        | Counterclockwise ->
+            match current with
+            | North -> West
+            | West -> South
+            | South -> East
+            | East -> North
     let canRotateForward (ship: Ship) (rotation: Rotation) (grid: Sector Grid) : bool =
         (* ------- À COMPLÉTER ------- *)
         (* ----- Implémentation ------ *)
