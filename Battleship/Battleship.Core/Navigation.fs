@@ -56,24 +56,22 @@ module Navigation =
         (* ------- À COMPLÉTER ------- *)
         (* ----- Implémentation ------ *)
         let (cx, cy) = ship.Center
-
         let rec checkCoords coords =
-        match coords with
-        | [] -> true
-        | (x, y)::rest ->
-            let dx = x - cx
-            let dy = y - cy
-            let (nx, ny) =
-                match direction with
-                | Clockwise -> (cx - dy, cy + dx)
-                | Counterclockwise -> (cx + dy, cy - dx)
-
-            isInGrid (nx, ny) grid &&
-            match Grid.getCell (ny, nx) grid with // inverser ny et nx
-            | Grid.Clear -> true
-            | Grid.Active (name, _) when name = ship.Name -> true 
-            | _ -> false
-        )
+            match coords with
+            | [] -> true
+            | (x, y)::rest ->
+                let dx = x - cx
+                let dy = y - cy
+                let (nx, ny) =
+                    match direction with
+                    | Clockwise -> (cx - dy, cy + dx)
+                    | Counterclockwise -> (cx + dy, cy - dx)
+                isInGrid (nx, ny) grid &&
+                match Grid.getCell (ny, nx) grid with
+                | Grid.Clear -> checkCoords rest
+                | Grid.Active (name, _) when name = ship.Name -> checkCoords rest
+                | _ -> false
+        checkCoords ship.Coords
 
     let rotate (ship: Ship) (direction: Direction) : Ship =
         (* ------- À COMPLÉTER ------- *)
@@ -82,21 +80,20 @@ module Navigation =
         let newFacing = rotateDirection ship.Facing rotation
 
         let rec rotateCoords coords =
-        match coords with
-        | [] -> []
-        | (x, y)::rest ->
-            let dx = x - cx
-            let dy = y - cy
-            let nx, ny =
-                match rotation with
-                | Clockwise -> (cx - dy, cy + dx)
-                | Counterclockwise -> (cx + dy, cy - dx)
-            let restCoords = rotateCoords rest
-            (nx, ny)::restCoords
+            match coords with
+            | [] -> []
+            | (x, y)::rest ->
+                let dx = x - cx
+                let dy = y - cy
+                let nx, ny =
+                    match direction with
+                    | Clockwise -> (cx - dy, cy + dx)
+                    | Counterclockwise -> (cx + dy, cy - dx)
+                let restCoords = rotateCoords rest
+                (nx, ny)::restCoords
 
         let newCoords = rotateCoords ship.Coords
-
-        { ship with Coords = newCoords; Facing = newFacing }
+        {ship with Coords = newCoords; Facing = newFacing}
 
     let canMoveForward (ship: Ship) (grid: Sector Grid) : bool =
         let newCoords = ship.Coords |> List.map (fun (row, col) ->
