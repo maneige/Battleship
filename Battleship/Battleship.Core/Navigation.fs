@@ -57,12 +57,14 @@ module Navigation =
         (* ----- Implémentation ------ *)
         let (cx, cy) = ship.Center
 
-        ship.Coords
-        |> List.forall (fun (x, y) ->
+        let rec checkCoords coords =
+        match coords with
+        | [] -> true
+        | (x, y)::rest ->
             let dx = x - cx
             let dy = y - cy
             let (nx, ny) =
-                match rotation with
+                match direction with
                 | Clockwise -> (cx - dy, cy + dx)
                 | Counterclockwise -> (cx + dy, cy - dx)
 
@@ -78,15 +80,21 @@ module Navigation =
         let (cx, cy) = ship.Center
         let newFacing = rotateDirection ship.Facing rotation
 
-        let newCoords =
-            ship.Coords
-            |> List.map (fun (x, y) ->
-                let dx = x - cx
-                let dy = y - cy
+        let rec rotateCoords coords =
+        match coords with
+        | [] -> []
+        | (x, y)::rest ->
+            let dx = x - cx
+            let dy = y - cy
+            let nx, ny =
                 match rotation with
                 | Clockwise -> (cx - dy, cy + dx)
                 | Counterclockwise -> (cx + dy, cy - dx)
-            )
+            let restCoords = rotateCoords rest
+            (nx, ny)::restCoords
+
+        let newCoords = rotateCoords ship.Coords
+
         { ship with Coords = newCoords; Facing = newFacing }
 
     let canMoveForward (ship: Ship) (grid: Sector Grid) : bool =
