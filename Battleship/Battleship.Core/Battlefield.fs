@@ -55,11 +55,57 @@ module Battlefield =
         None
 
     let extractData (grid: Sector Grid) : Data =
-        (* ------- À COMPLÉTER ------- *)
-        (* ----- Implémentation ------ *)
-        { Dims = (0, 0); Ships = [] }
+        let rec getRows g =
+            match g with
+            | Empty -> 0
+            | Row (_, rest) -> 1 + getRows rest
+                
+        let rec getCols g =
+            match g with
+            | Empty -> 0
+            | Row (row, _) -> List.length row
+                
+        let dims = (getRows grid, getCols grid)
+        
+        let shipData = 
+            let collectShipData = 
+                collectGrid 
+                    (fun row col sector acc -> 
+                        match sector with
+                        | Active (name, idx) -> ((row, col), name, idx) :: acc
+                        | Clear -> acc)
+                    []
+                    grid
+                    
+            collectShipData
+            |> List.groupBy (fun (_, name, _) -> name)
+            |> List.map (fun (name, coordsWithIndices) ->
+                let sortedCoords = 
+                    coordsWithIndices 
+                    |> List.sortBy (fun (_, _, idx) -> idx)
+                    |> List.map (fun ((row, col), _, _) -> (row, col))
+                    
+                let center = 
+                    let centerIdx = List.length sortedCoords / 2
+                    List.item centerIdx sortedCoords
+                    
+                let facing =
+                    if List.length sortedCoords >= 2 then
+                        let (r1, c1) = List.head sortedCoords
+                        let (r2, c2) = List.item 1 sortedCoords
+                        if r1 = r2 then
+                            if c2 > c1 then East else West
+                        else
+                            if r2 > r1 then South else North
+                    else
+                        South 
+                        
+                { Coords = sortedCoords; Center = center; Facing = facing; Name = name }
+            )
+            
+        { Dims = dims; Ships = shipData }
 
     let loadData (data: Data) : Sector Grid =
-        (* ------- À COMPLÉTER ------- *)
-        (* ----- Implémentation ------ *)
-        Empty
+        let emptyGrid = initClearGrid data.Dims
+        data.Ships
+        |> List.fold (fun grid ship -> addShip ship grid) emptyGrid

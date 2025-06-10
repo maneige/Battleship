@@ -113,6 +113,18 @@ module Grid =
     let mapGrid (f : 'a -> 'a) (grid : 'a Grid) : ('a Grid) =
         mapGridCoord (fun _ _ -> fun x -> f x) grid
 
+    let collectGrid (f: int -> int -> 'a -> 'b -> 'b) (initial: 'b) (grid: 'a Grid) : 'b =
+        let rec traverseGrid rowIndex acc g =
+            match g with
+            | Empty -> acc
+            | Row(rowList, rest) ->
+                let rowAcc = 
+                    rowList 
+                    |> List.mapi (fun colIndex cell -> (colIndex, cell))
+                    |> List.fold (fun acc' (colIndex, cell) -> 
+                        f rowIndex colIndex cell acc') acc
+                traverseGrid (rowIndex + 1) rowAcc rest
+        traverseGrid 0 initial grid
     //Retourne une liste de paires des coordonnées et des valeurs ('a) qui remplissaient la condition
     let filterGridCoordValues (condition : 'a -> bool) (grid : 'a Grid) : (Coord * 'a) list =
         let rec aux (g : 'a Grid) (i : int) (acc : (Coord * 'a) list) =
