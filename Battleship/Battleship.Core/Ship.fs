@@ -42,7 +42,7 @@ module Ship =
 
     //Retourne (-) si "facing" North ou East et (+) si South ou West
     let getSign (facing : Direction) : (int -> int -> int) =
-        if facing=North || facing=East then (-) else (+)
+        if facing=North || facing=West then (-) else (+)
 
     //Retourne la direction opposée
     let getOpposite (facing : Direction) : Direction =
@@ -60,7 +60,7 @@ module Ship =
     let isXAxis (facing: Direction) : bool =
         not (isYAxis facing)
 
-    //Retourne les coordonnées de la tête
+    //Retourne les coordonnées de la tête par rapport au centre. 
     //Les coordonnées ne sont pas nécessairement valides par rapport à une grille d'origine 0,0
     let getHeadCoord (center: Coord) (facing: Direction) (name: Name) : Coord = 
         if isYAxis facing then 
@@ -70,6 +70,7 @@ module Ship =
             (fst center, 
             (getSign facing) (snd center) (getHeadDistance name))
 
+    //Retourne une liste de coordonnées de taille size avec x y comme première valeur
     let makeCoordsList (isYAxis : bool) (size : int) (x : int) (y : int) (sign : int -> int -> int) : Coord list =
         let rec make_coords (yAxis : bool) (n : int) (i : int) (j : int) : Coord list =
             match yAxis, n with
@@ -77,16 +78,22 @@ module Ship =
             | true,_ -> [(i,j)]@(make_coords (yAxis) (n-1) (sign i 1) j)
             | false,_ -> [(i,j)]@((make_coords yAxis (n-1) i (sign j 1)))
         make_coords isYAxis size x y
-        //NOTE: une version apparemment plus efficiente serait d'accumuler dans une liste avec :: (O(1)) et de faire List.rev à la fin (O(n)). @ est en O(n)
 
-       
+    //Étant donnée une coordonnée, donne sa position dans le bateau (0 étant la tête)
+    let getIndexInShip (ship : Ship) (coord : Coord) : int =
+        List.findIndex (fun x -> coord = x ) ship.Coords
+
+    //Retourne une coordonnée adjacente à i,j en fonction de l'axe et de la direction indiquée par le signe
+    let getNextCoord (yAxis : bool) (signFunction : int -> int -> int) (i : int) (j : int) : Coord =
+        if yAxis then Coord(signFunction i 1, j) 
+        else Coord(i, signFunction j 1)
+
 
     (* --- Fin nouvelles fonctions --- *)
 
 
+    //Crée un bateau
     let createShip (center: Coord) (facing: Direction) (name: Name) : Ship =
-        (* ------- À COMPLÉTER ------- *)
-        (* ----- Implémentation ------ *)
         let size = getSize id name
         let headi, headj = getHeadCoord center facing name
         let yAxis = isYAxis facing
@@ -94,8 +101,29 @@ module Ship =
         let coords = makeCoordsList yAxis size headi headj s
         { Coords = coords; Center = center; Facing = facing ; Name = name }
 
-
+    //Retourne une liste de coordonnées qui constituent le périmètre du bateau
     let getPerimeter (ship: Ship) (dims: Dims) : Coord list =
-        (* ------- À COMPLÉTER ------- *)
-        (* ----- Implémentation ------ *)
-        []
+
+        //Produit une liste de coordonnées adjacentes selon l'axe représenté par le signe
+        let getAdjacentCoords (yAxis : bool) (sign : int -> int -> int) (cList : Coord List) : Coord list =
+            let adjList = List.map (fun c -> let i,j = c in if yAxis then (i, sign j 1) else (sign i 1, j )) cList
+            let filteredList,_ = List.partition (fun x -> isInDims x dims) adjList
+            filteredList
+
+        let dir = ship.Facing
+        let posSign = getSign dir
+        let negSign = getSign (getOpposite dir)
+        let isY = isYAxis dir
+        let i1, j1 = List.head ship.Coords
+        let i2, j2 = List.last ship.Coords
+
+        //Garde les coordonnées de périmètre au bout de la tête et de la queue si elles sont dans la grille
+        let perimeter1 = let nh = getNextCoord isY (posSign) i1 j1 in if isInDims nh dims then [nh] else []
+        let perimeter2 = let nl = getNextCoord isY (negSign) i2 j2 in if isInDims nl dims then [nl] else []
+        let extraCoords = perimeter1@perimeter2@ship.Coords
+
+        //Crée des listes de coordonnées adjacentes et conserve celles qui sont valides
+        let adj1 = getAdjacentCoords isY (+) extraCoords
+        let adj2 = getAdjacentCoords isY (-) extraCoords
+        perimeter1@perimeter2@adj1@adj2
+        

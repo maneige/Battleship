@@ -17,6 +17,9 @@ module Navigation =
         | North -> 180
         | East -> 270
 
+    (* ------- À COMPLÉTER ------- *)
+    (* --- Nouvelles fonctions --- *)
+
     let rotateDirection current rotation =
         match rotation with
         | Clockwise ->
@@ -32,25 +35,65 @@ module Navigation =
             | North -> West
             | East -> North
 
+    //Retourne true si le secteur est vide (Clear) ou s'il contient une partie du bateau
+    let isClearOrSame (sector : Sector) (name : Name) : bool =
+        match sector with
+            | Clear -> true
+            | Active(cellName, _) -> cellName = name 
+
+    //Dans le contexte du placement des bateaux, valide les limites de la grille, si la cellule est libre et les périmètres
+    let validateDeploymentConditions (coords : Coord list) (name : Name) (grid: Sector Grid) : bool =
+     
+        //Toutes les coordonnées sont dans la grille
+        let inBounds = checkCoords (fun coord -> isInGrid coord grid) coords
+        
+        //Les coordonnées sont libres ou occupées par ce bateau
+        let isClear = 
+            checkCoords
+                (fun coord -> 
+                    let cell = getCell coord grid
+                    isClearOrSame cell name)
+                coords
+
+        //Compare les coordonnées avec la liste des périmètres de tous les autres bateaux
+        let otherShipsCoords = filterGridCoordValues (fun x -> not (isClearOrSame x name)) grid
+        //TODO - terminer le check de périmètre (ici ça ne regarde pas les périmètres mais les autres bateaux
+        let isInAnyPerimeter = 
+            checkCoords 
+                (fun coord -> 
+                    let rec checkPerimeters (cs : (Coord * Sector) list) : bool = 
+                        match cs with
+                        | [] -> false
+                        | (cp,_)::crest -> if cp = coord then true else checkPerimeters crest
+                    checkPerimeters otherShipsCoords)
+                coords
+        
+        inBounds && isClear && not isInAnyPerimeter
+
+
+    (* --- Fin nouvelles fonctions --- *)
+
+
+    //Retourne true si toutes les coordonnées sont valides (secteur Clear, coord dans la grille et à l'extérieur de tous périmètres)
     let canPlace (center: Coord) (direction: Direction) (name: Name) (grid: Sector Grid) : bool =
-        (* ------- À COMPLÉTER ------- *)
-        (* ----- Implémentation ------ *)
         let ship = createShip center direction name
         let coords = ship.Coords
-        let inBounds = checkCoords (fun coord -> isInGrid coord grid) coords
-        let isClear = checkCoords (fun coord -> (getCell coord grid) = Clear) coords
-        inBounds && isClear
-        //TODO doit aussi valider le périmètre des bateaux! canMove sera identique mais sans périmètre
-
+        validateDeploymentConditions coords name grid
+        
+    //Retourne true si toutes les nouvelles coordonnées du bateau sont dans la grille et sur des secteurs Clear
     let canMove (ship: Ship) (direction: Direction) (grid: Sector Grid) : bool =
-        (* ------- À COMPLÉTER ------- *)
-        (* ----- Implémentation ------ *)
-        false
+        let i,j = ship.Center
+        let newCenter = getNextCoord (isYAxis direction) (getSign direction) i j
+        let tempShip = createShip newCenter direction ship.Name
+        validateDeploymentConditions tempShip.Coords ship.Name grid
 
+    //Régénère les coordonnées du bateau
     let move (ship: Ship) (direction: Direction) : Ship =
-        (* ------- À COMPLÉTER ------- *)
-        (* ----- Implémentation ------ *)
-        { Coords = []; Center = (0, 0); Facing = North; Name = Spy }
+        let i,j = ship.Center
+        let yAxis = (isYAxis direction)
+        let s = (getSign direction)
+        let newCenter = getNextCoord yAxis s i j
+        createShip newCenter direction ship.Name
 
     let canRotate (ship: Ship) (direction: Direction) (grid: Sector Grid) : bool =
         (* ------- À COMPLÉTER ------- *)
@@ -72,14 +115,15 @@ module Navigation =
                 | Grid.Active (name, _) when name = ship.Name -> checkCoords rest
                 | _ -> false
         checkCoords ship.Coords
+        //false
 
     let rotate (ship: Ship) (direction: Direction) : Ship =
         (* ------- À COMPLÉTER ------- *)
         (* ----- Implémentation ------ *)
-        let (cx, cy) = ship.Center
-        let newFacing = rotateDirection ship.Facing rotation
+        let (cx, cy) = ship.center
+        let newfacing = rotatedirection ship.facing rotation
 
-        let rec rotateCoords coords =
+        let rec rotatecoords coords =
             match coords with
             | [] -> []
             | (x, y)::rest ->
@@ -87,13 +131,14 @@ module Navigation =
                 let dy = y - cy
                 let nx, ny =
                     match direction with
-                    | Clockwise -> (cx - dy, cy + dx)
-                    | Counterclockwise -> (cx + dy, cy - dx)
-                let restCoords = rotateCoords rest
-                (nx, ny)::restCoords
+                    | clockwise -> (cx - dy, cy + dx)
+                    | counterclockwise -> (cx + dy, cy - dx)
+                let restcoords = rotatecoords rest
+                (nx, ny)::restcoords
 
-        let newCoords = rotateCoords ship.Coords
-        {ship with Coords = newCoords; Facing = newFacing}
+        let newcoords = rotatecoords ship.coords
+        {ship with coords = newcoords; facing = newfacing}
+        //{ Coords = []; Center = (0, 0); Facing = North; Name = Spy }
 
     let canMoveForward (ship: Ship) (grid: Sector Grid) : bool =
         let newCoords = ship.Coords |> List.map (fun (row, col) ->
@@ -108,7 +153,7 @@ module Navigation =
             match getCell coord grid with
             | Clear -> true
             | Active (name, _) -> name = ship.Name
-        newCoords |> List.forall isValidMove
+        newCoords |> List.forall isValidMove //--- TODO: enlever le forall ici
 
     let moveForward (ship: Ship) : Ship =
         let newCoords = ship.Coords |> List.map (fun (row, col) ->
@@ -126,6 +171,7 @@ module Navigation =
             | East -> (centerRow, centerCol + 1)
             | West -> (centerRow, centerCol - 1)
         { ship with Coords = newCoords; Center = newCenter }
+
     let getNextDirection (current: Direction) (rotation: Rotation) : Direction =
         match rotation with
         | Clockwise ->
@@ -140,13 +186,16 @@ module Navigation =
             | West -> South
             | South -> East
             | East -> North
+
     let canRotateForward (ship: Ship) (rotation: Rotation) (grid: Sector Grid) : bool =
         (* ------- À COMPLÉTER ------- *)
         (* ----- Implémentation ------ *)
         let newDirection = rotateDirection ship.Facing rotation
         canRotate ship rotation grid
+        //false
 
     let rotateForward (ship: Ship) (rotation: Rotation) : Ship =
         (* ------- À COMPLÉTER ------- *)
         (* ----- Implémentation ------ *)
         rotate ship rotation
+        //{ Coords = []; Center = (0, 0); Facing = North; Name = Spy }
