@@ -24,16 +24,17 @@ module Navigation =
         match rotation with
         | Clockwise ->
             match current with 
-            | South -> West
-            | West -> North
             | North -> East
             | East -> South
+            | South -> West
+            | West -> North
         | Counterclockwise ->
             match current with 
-            | South -> East
-            | West -> South
             | North -> West
+            | West -> South
+            | South -> East
             | East -> North
+
 
     //Retourne true si le secteur est vide (Clear) ou s'il contient une partie du bateau
     let isClearOrSame (sector : Sector) (name : Name) : bool =
@@ -96,8 +97,11 @@ module Navigation =
         createShip newCenter direction ship.Name
 
     let canRotate (ship: Ship) (direction: Direction) (grid: Sector Grid) : bool =
-        (* ------- À COMPLÉTER ------- *)
-        (* ----- Implémentation ------ *)
+        let rotation = 
+            match direction with
+            | North | West -> Counterclockwise
+            | East | South -> Clockwise
+
         let (cx, cy) = ship.Center
         let rec checkCoords coords =
             match coords with
@@ -106,39 +110,41 @@ module Navigation =
                 let dx = x - cx
                 let dy = y - cy
                 let (nx, ny) =
-                    match direction with
+                    match rotation with
                     | Clockwise -> (cx - dy, cy + dx)
                     | Counterclockwise -> (cx + dy, cy - dx)
                 isInGrid (nx, ny) grid &&
-                match Grid.getCell (ny, nx) grid with
-                | Grid.Clear -> checkCoords rest
-                | Grid.Active (name, _) when name = ship.Name -> checkCoords rest
+                match getCell (nx, ny) grid with
+                | Clear -> checkCoords rest
+                | Active (name, _) when name = ship.Name -> checkCoords rest
                 | _ -> false
         checkCoords ship.Coords
-        //false
+
 
     let rotate (ship: Ship) (direction: Direction) : Ship =
-        (* ------- À COMPLÉTER ------- *)
-        (* ----- Implémentation ------ *)
-        let (cx, cy) = ship.center
-        let newfacing = rotatedirection ship.facing rotation
+        let rotation = 
+            match direction with
+            | North | West -> Counterclockwise
+            | East | South -> Clockwise
 
-        let rec rotatecoords coords =
+        let (cx, cy) = ship.Center
+        let newFacing = rotateDirection ship.Facing rotation
+
+        let rec rotateCoords coords =
             match coords with
             | [] -> []
             | (x, y)::rest ->
                 let dx = x - cx
                 let dy = y - cy
-                let nx, ny =
-                    match direction with
-                    | clockwise -> (cx - dy, cy + dx)
-                    | counterclockwise -> (cx + dy, cy - dx)
-                let restcoords = rotatecoords rest
-                (nx, ny)::restcoords
+                let (nx, ny) =
+                    match rotation with
+                    | Clockwise -> (cx - dy, cy + dx)
+                    | Counterclockwise -> (cx + dy, cy - dx)
+                (nx, ny)::(rotateCoords rest)
+                    
+        let newCoords = rotateCoords ship.Coords
+        { ship with Coords = newCoords; Facing = newFacing }
 
-        let newcoords = rotatecoords ship.coords
-        {ship with coords = newcoords; facing = newfacing}
-        //{ Coords = []; Center = (0, 0); Facing = North; Name = Spy }
 
     let canMoveForward (ship: Ship) (grid: Sector Grid) : bool =
         let newCoords = ship.Coords |> List.map (fun (row, col) ->
@@ -191,11 +197,11 @@ module Navigation =
         (* ------- À COMPLÉTER ------- *)
         (* ----- Implémentation ------ *)
         let newDirection = rotateDirection ship.Facing rotation
-        canRotate ship rotation grid
-        //false
+        canRotate ship newDirection grid
 
     let rotateForward (ship: Ship) (rotation: Rotation) : Ship =
         (* ------- À COMPLÉTER ------- *)
         (* ----- Implémentation ------ *)
-        rotate ship rotation
+        let newDirection = rotateDirection ship.Facing rotation
+        rotate ship newDirection
         //{ Coords = []; Center = (0, 0); Facing = North; Name = Spy }

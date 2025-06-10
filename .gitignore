@@ -4,3 +4,4 @@
 Battleship.Web/
 bin/
 obj/
+.fake
