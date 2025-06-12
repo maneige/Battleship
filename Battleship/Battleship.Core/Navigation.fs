@@ -85,7 +85,7 @@ module Navigation =
     let canMove (ship: Ship) (direction: Direction) (grid: Sector Grid) : bool =
         let i,j = ship.Center
         let newCenter = getNextCoord (isYAxis direction) (getSign direction) i j
-        let tempShip = createShip newCenter direction ship.Name
+        let tempShip = createShip newCenter ship.Facing ship.Name
         validateDeploymentConditions tempShip.Coords ship.Name grid
 
     //Régénère les coordonnées du bateau
@@ -94,7 +94,7 @@ module Navigation =
         let yAxis = (isYAxis direction)
         let s = (getSign direction)
         let newCenter = getNextCoord yAxis s i j
-        createShip newCenter direction ship.Name
+        createShip newCenter ship.Facing ship.Name
 
     let canRotate (ship: Ship) (direction: Direction) (grid: Sector Grid) : bool =
         let rotation = 
@@ -159,7 +159,7 @@ module Navigation =
             match getCell coord grid with
             | Clear -> true
             | Active (name, _) -> name = ship.Name
-        newCoords |> List.forall isValidMove //--- TODO: enlever le forall ici
+        newCoords |> List.forall isValidMove
 
     let moveForward (ship: Ship) : Ship =
         let newCoords = ship.Coords |> List.map (fun (row, col) ->

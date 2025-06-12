@@ -54,18 +54,8 @@ module Battlefield =
         (* ----- Implémentation ------ *)
         None
 
-    let extractData (grid: Sector Grid) : Data =
-        let rec getRows g =
-            match g with
-            | Empty -> 0
-            | Row (_, rest) -> 1 + getRows rest
-                
-        let rec getCols g =
-            match g with
-            | Empty -> 0
-            | Row (row, _) -> List.length row
-                
-        let dims = (getRows grid, getCols grid)
+    let extractData (grid: Sector Grid) : Data =               
+        let dims = getDims grid
         
         let shipData = 
             let collectShipData = 
