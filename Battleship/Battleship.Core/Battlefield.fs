@@ -54,12 +54,12 @@ module Battlefield =
         | Active (name, _) -> Some name
         | _ -> None
 
-    let extractData (grid: Sector Grid) : Data =
-        (* ------- À COMPLÉTER ------- *)
-        (* ----- Implémentation ------ *)
-        { Dims = (0, 0); Ships = [] }
+    let extractData (grid: Sector Grid) : Data =               
+        let dims = getDims grid
+        let shipData = getAllShips grid 
+        { Dims = dims; Ships = shipData }
 
     let loadData (data: Data) : Sector Grid =
-        (* ------- À COMPLÉTER ------- *)
-        (* ----- Implémentation ------ *)
-        Empty
+        let emptyGrid = initClearGrid data.Dims
+        data.Ships
+        |> List.fold (fun grid ship -> addShip ship grid) emptyGrid

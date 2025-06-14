@@ -12,23 +12,23 @@ module Grid =
     (* --- Nouvelles fonctions --- *)
 
     //Compte le nombre de Row d'une Grid (= hauteur)
-    let numRows (grid : 'a Grid) : int =
-        let rec nR (i : int) (g : 'a Grid) =
+    let getRows (grid : 'a Grid) : int =
+        let rec gR (g : 'a Grid) =
             match g with
-            | Empty -> i
-            | Row (_, rest) -> nR (i+1) rest
-        nR 0 grid
+            | Empty -> 0
+            | Row (_, rest) -> 1 + gR rest
+        gR grid
 
     //Compte le nombre de colonnes (longueur d'une Row) d'une Grid (= largeur)
-    let numColumns (grid : 'a Grid) : int =
+    let getColumns (grid : 'a Grid) : int =
         match grid with 
             | Empty -> 0
             | Row(first, _) -> List.length first
 
     //Calcule les dimensions d'une Grid
     let getDims (grid : 'a Grid) : Dims =
-        let rows = numRows grid
-        let cols = numColumns grid
+        let rows = getRows grid
+        let cols = getColumns grid
         (rows, cols)
 
     //Retourne la liste ('a list) d'une énième Row dans une Grid
@@ -112,6 +112,20 @@ module Grid =
     //Applique f sur tous les éléments de la grille (Grid), sans tenir compte des coordonnées
     let mapGrid (f : 'a -> 'a) (grid : 'a Grid) : ('a Grid) =
         mapGridCoord (fun _ _ -> fun x -> f x) grid
+
+    //
+    let collectGrid (f: int -> int -> 'a -> 'b -> 'b) (initial: 'b) (grid: 'a Grid) : 'b =
+        let rec traverseGrid rowIndex acc g =
+            match g with
+            | Empty -> acc
+            | Row(rowList, rest) ->
+                let rowAcc = 
+                    rowList 
+                    |> List.mapi (fun colIndex cell -> (colIndex, cell))
+                    |> List.fold (fun acc' (colIndex, cell) -> 
+                        f rowIndex colIndex cell acc') acc
+                traverseGrid (rowIndex + 1) rowAcc rest
+        traverseGrid 0 initial grid
 
     //Retourne une liste de paires des coordonnées et des valeurs ('a) qui remplissaient la condition
     let filterGridCoordValues (condition : 'a -> bool) (grid : 'a Grid) : (Coord * 'a) list =
