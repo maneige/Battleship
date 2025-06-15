@@ -40,7 +40,7 @@ module Ship =
         let rounded_half = ceil (half)
         (int rounded_half) - 1
 
-    //Retourne (-) si "facing" North ou East et (+) si South ou West
+    //Retourne (-) si "facing" North ou West et (+) si South ou East
     let getSign (facing : Direction) : (int -> int -> int) =
         if facing=North || facing=West then (-) else (+)
 
@@ -55,10 +55,6 @@ module Ship =
     //Retourne True si "facing" North ou South
     let isYAxis (facing: Direction) : bool =
         facing=North || facing=South
-
-    //Retourne True si "facing" East ou West
-    let isXAxis (facing: Direction) : bool =
-        not (isYAxis facing)
 
     //Retourne les coordonnées de la tête par rapport au centre. 
     //Les coordonnées ne sont pas nécessairement valides par rapport à une grille d'origine 0,0

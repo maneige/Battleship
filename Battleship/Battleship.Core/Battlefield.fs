@@ -10,13 +10,7 @@ module Battlefield =
     (* ------- À COMPLÉTER ------- *)
     (* --- Nouvelles fonctions --- *)
 
-
-    //Remet le secteur à Clear si un bateau de ce nom est enregistré dans ce secteur
-    let removeShipFromSector (name : Name) (sector : Sector) : Sector =
-        match sector with
-        | Clear -> Clear
-        | Active(n,i) -> if n=name then Clear else Active(n,i)
-
+    // n/a
 
     (* --- Fin nouvelles fonctions --- *)
 
@@ -46,7 +40,16 @@ module Battlefield =
 
     //Retire le bateau de la grille (efface les anciennes positions) et l'ajoute à nouveau
     let replaceShip (ship: Ship) (grid: Sector Grid) : Sector Grid =
-        let clearedGrid = mapGrid (removeShipFromSector ship.Name) grid
+        //let clearedGrid = mapGrid (removeShipFromSector ship.Name) grid
+
+        let clearedGrid = 
+            mapGrid 
+                (fun sector ->
+                    match sector with
+                        | Clear -> Clear
+                        | Active(n,i) -> if n=ship.Name then Clear else Active(n,i)) 
+                grid
+
         addShip ship clearedGrid
 
     let getSelectedName (coord: Coord) (grid: Sector Grid) : Name option =
