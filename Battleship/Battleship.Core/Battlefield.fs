@@ -53,9 +53,9 @@ module Battlefield =
         addShip ship clearedGrid
 
     let getSelectedName (coord: Coord) (grid: Sector Grid) : Name option =
-        (* ------- À COMPLÉTER ------- *)
-        (* ----- Implémentation ------ *)
-        None
+        match getCell coord grid with
+        | Active (name, _) -> Some name
+        | _ -> None
 
     let extractData (grid: Sector Grid) : Data =               
         let dims = getDims grid
